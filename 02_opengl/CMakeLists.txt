@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(PGR_examples_01)
+project(PGR_examples_02)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1 ) 
 
