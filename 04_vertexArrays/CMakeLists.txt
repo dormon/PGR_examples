@@ -8,8 +8,8 @@ SET(CMAKE_CXX_STANDARD 17)
 option(SDL_SHARED "" OFF)
 option(SDL_STATIC "" ON)
 add_subdirectory(../libs/SDL2-2.0.16 sdl2_build)
-
 add_subdirectory(../libs/geGL gegl_build)
+add_subdirectory(../libs/glm-0.9.9.8 glm_build)
 
 set(SOURCES
   src/main.cpp
@@ -19,9 +19,14 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} SDL2-static SDL2::SDL2main geGL::geGL)
+target_link_libraries(${PROJECT_NAME} 
+  SDL2-static
+  SDL2::SDL2main
+  geGL::geGL
+  glm)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 

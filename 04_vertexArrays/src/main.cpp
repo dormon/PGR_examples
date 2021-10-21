@@ -1,11 +1,17 @@
 #include<iostream>
 #include<vector>
-#include<SDL.h>
 
-#include<bunny.hpp>
+#include<SDL.h>
+#include<glm/glm.hpp>
+#include<glm/gtc/matrix_access.hpp>
+#include<glm/gtc/matrix_transform.hpp>
+#include<glm/gtc/type_ptr.hpp>
 
 #include<geGL/geGL.h>
 #include<geGL/StaticCalls.h>
+
+#include<bunny.hpp>
+
 using namespace ge::gl;
 
 GLuint createShader(GLenum type,std::string const&src){
@@ -107,11 +113,16 @@ int main(int argc,char*argv[]){
 
   auto vsSrc = R".(
   #version 460
+
   layout(location=0)in vec3 position;
   layout(location=1)in vec3 normal  ;
+  
+  uniform mat4 proj = mat4(1);
+  uniform mat4 view = mat4(1);
+
   out vec3 vNormal;
   void main(){
-    gl_Position = vec4(position,1);
+    gl_Position = proj*view*vec4(position,1);
     vNormal = normal;
   }
 
@@ -130,6 +141,15 @@ int main(int argc,char*argv[]){
       createShader(GL_VERTEX_SHADER,vsSrc),
       createShader(GL_FRAGMENT_SHADER,fsSrc)});
 
+  auto projId = glGetUniformLocation(prg,"proj");
+  auto viewId = glGetUniformLocation(prg,"view");
+  auto proj = glm::perspective(glm::half_pi<float>(),1024.f/768.f,0.01f,1000.f);
+
+  float angleX=0.f;
+  float angleY=0.f;
+
+
+
   glEnable(GL_DEPTH_TEST);
 
   bool running = true;
@@ -138,7 +158,21 @@ int main(int argc,char*argv[]){
     while(SDL_PollEvent(&event)){
       if(event.type == SDL_QUIT)
         running = false;
+      if(event.type == SDL_KEYDOWN){
+        float sensitivity = 0.1f;
+        if(event.key.keysym.sym == SDLK_a)          angleY += sensitivity;
+        if(event.key.keysym.sym == SDLK_d)          angleY -= sensitivity;
+        if(event.key.keysym.sym == SDLK_w)          angleX += sensitivity;
+        if(event.key.keysym.sym == SDLK_s)          angleX -= sensitivity;
+      }
     }
+
+
+    auto view = 
+      glm::translate(glm::mat4(1.f),glm::vec3(0.f,0.f,-10.f))*
+      glm::rotate(glm::mat4(1.f),angleY,glm::vec3(0.f,1.f,0.f))*
+      glm::rotate(glm::mat4(1.f),angleX,glm::vec3(1.f,0.f,0.f));
+
     glClearColor(0,0.5,0,1);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -151,6 +185,9 @@ int main(int argc,char*argv[]){
     //bunny
     glBindVertexArray(vaoBunny);
     glUseProgram(prg);
+
+    glProgramUniformMatrix4fv(prg,projId,1,GL_FALSE,glm::value_ptr(proj));
+    glProgramUniformMatrix4fv(prg,viewId,1,GL_FALSE,glm::value_ptr(view));
     glDrawElements(GL_TRIANGLES,sizeof(bunnyIndices)/sizeof(VertexIndex),GL_UNSIGNED_INT,0);
     glBindVertexArray(0);
 
